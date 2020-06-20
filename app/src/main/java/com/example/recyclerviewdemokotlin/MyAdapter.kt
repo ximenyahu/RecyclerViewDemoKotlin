@@ -1,6 +1,7 @@
 package com.example.recyclerviewdemokotlin
 
 import android.content.Context
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,6 +28,17 @@ class MyAdapter(val context: Context, val arrayList: ArrayList<Model>) :
     }
 
     override fun onBindViewHolder(holder: InnerHolder, position: Int) {
-        holder.bindItem(arrayList[position])
+        val model = arrayList[position]
+        val title: String = model.title
+        val description: String = model.des
+        val image: Int = model.image
+        holder.bindItem(model)
+        holder.itemView.setOnClickListener(View.OnClickListener {
+            val intent = Intent(context, AnotherActivity::class.java)
+            intent.putExtra("title", title)
+            intent.putExtra("description", description)
+            intent.putExtra("image", image)
+            context.startActivity(intent)
+        })
     }
 }
