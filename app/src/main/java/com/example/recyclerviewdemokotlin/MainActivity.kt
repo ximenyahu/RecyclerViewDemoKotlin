@@ -1,8 +1,12 @@
 package com.example.recyclerviewdemokotlin
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -13,6 +17,8 @@ import kotlin.collections.ArrayList
 class MainActivity : AppCompatActivity() {
     val mArrayList = ArrayList<Model>()
     val mDisplayList = ArrayList<Model>()
+    lateinit var myAdapter: MyAdapter
+    lateinit var mSharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,9 +42,27 @@ class MainActivity : AppCompatActivity() {
         mArrayList.add(Model("Nando De Colo", "This is Nando De Colo", R.drawable.nando_de_colo))
         mArrayList.add(Model("Cory Joseph", "This is Cory Joseph", R.drawable.cory_joseph))
         mDisplayList.addAll(mArrayList)
-        val adapter = MyAdapter(this, mDisplayList)
+        myAdapter = MyAdapter(this, mDisplayList)
         recycler_view.layoutManager = LinearLayoutManager(this)
-        recycler_view.adapter = adapter
+        recycler_view.adapter = myAdapter
+        mSharedPreferences = getSharedPreferences("my_Pref", Context.MODE_PRIVATE)
+        val sortBy = mSharedPreferences.getString("sortBy", "Ascending")
+        if (sortBy.equals("Ascending")) {
+            sortAscending(myAdapter)
+        } else if (sortBy.equals("Descending")) {
+            sortDescending(myAdapter)
+        }
+    }
+
+    private fun sortDescending(myAdapter: MyAdapter) {
+        mDisplayList.sortWith(compareBy { it.title })
+        mDisplayList.reverse()
+        myAdapter.notifyDataSetChanged()
+    }
+
+    private fun sortAscending(myAdapter: MyAdapter) {
+        mDisplayList.sortWith(compareBy { it.title })
+        myAdapter.notifyDataSetChanged()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -72,6 +96,34 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.sort) {
+            sortDialog()
+        }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun sortDialog() {
+        val options = arrayOf("Ascending", "Descending")
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Sort by")
+        builder.setIcon(R.drawable.ic_action_sort)
+        builder.setItems(options) { dialog, which ->
+            if (which == 0) {
+                val edit: SharedPreferences.Editor = mSharedPreferences.edit()
+                edit.putString("sortBy", "Ascending")
+                edit.apply()
+                sortAscending(myAdapter)
+                Toast.makeText(this@MainActivity, "Ascending order", Toast.LENGTH_SHORT).show()
+            }
+
+            if (which == 1) {
+                val edit: SharedPreferences.Editor = mSharedPreferences.edit()
+                edit.putString("sortBy", "Descending")
+                edit.apply()
+                sortDescending(myAdapter)
+                Toast.makeText(this@MainActivity, "Descending order", Toast.LENGTH_SHORT).show()
+            }
+        }
+        builder.create().show()
     }
 }
